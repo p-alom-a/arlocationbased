@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AR.js avec gps-new-entity-place</title>
+    <title>AR.js avec guide directionnel</title>
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
     <script>
@@ -21,6 +21,46 @@
             return d; // distance en mètres
         }
 
+        // Fonction pour calculer le cap (bearing) entre deux points
+        function calculateBearing(lat1, lon1, lat2, lon2) {
+            const φ1 = lat1 * Math.PI/180;
+            const φ2 = lat2 * Math.PI/180;
+            const λ1 = lon1 * Math.PI/180;
+            const λ2 = lon2 * Math.PI/180;
+
+            const y = Math.sin(λ2-λ1) * Math.cos(φ2);
+            const x = Math.cos(φ1) * Math.sin(φ2) -
+                    Math.sin(φ1) * Math.cos(φ2) * Math.cos(λ2-λ1);
+            const θ = Math.atan2(y, x);
+            
+            return (θ*180/Math.PI + 360) % 360; // en degrés
+        }
+
+        // Fonction pour obtenir la direction en langage naturel
+        function getDirectionText(bearing, deviceHeading) {
+            // Calculer l'angle relatif entre la direction de l'objet et celle du téléphone
+            let relativeBearing = (bearing - deviceHeading + 360) % 360;
+            
+            // Convertir en direction
+            if (relativeBearing > 337.5 || relativeBearing <= 22.5) {
+                return "DROIT DEVANT";
+            } else if (relativeBearing > 22.5 && relativeBearing <= 67.5) {
+                return "AVANT-DROITE";
+            } else if (relativeBearing > 67.5 && relativeBearing <= 112.5) {
+                return "À DROITE";
+            } else if (relativeBearing > 112.5 && relativeBearing <= 157.5) {
+                return "ARRIÈRE-DROITE";
+            } else if (relativeBearing > 157.5 && relativeBearing <= 202.5) {
+                return "DERRIÈRE VOUS";
+            } else if (relativeBearing > 202.5 && relativeBearing <= 247.5) {
+                return "ARRIÈRE-GAUCHE";
+            } else if (relativeBearing > 247.5 && relativeBearing <= 292.5) {
+                return "À GAUCHE";
+            } else if (relativeBearing > 292.5 && relativeBearing <= 337.5) {
+                return "AVANT-GAUCHE";
+            }
+        }
+
         window.onload = function() {
             // Créer un div pour afficher les logs
             const logDiv = document.createElement('div');
@@ -33,17 +73,51 @@
             logDiv.style.padding = '10px';
             logDiv.style.fontFamily = 'monospace';
             logDiv.style.zIndex = '9999';
+            logDiv.style.width = '80%';
             document.body.appendChild(logDiv);
+
+            // Créer un élément pour la boussole/direction
+            const compassDiv = document.createElement('div');
+            compassDiv.id = 'compass';
+            compassDiv.style.position = 'absolute';
+            compassDiv.style.bottom = '20px';
+            compassDiv.style.left = '50%';
+            compassDiv.style.transform = 'translateX(-50%)';
+            compassDiv.style.backgroundColor = 'rgba(255,0,0,0.8)';
+            compassDiv.style.color = 'white';
+            compassDiv.style.padding = '15px';
+            compassDiv.style.borderRadius = '10px';
+            compassDiv.style.fontFamily = 'Arial, sans-serif';
+            compassDiv.style.fontSize = '24px';
+            compassDiv.style.fontWeight = 'bold';
+            compassDiv.style.zIndex = '9999';
+            compassDiv.style.textAlign = 'center';
+            document.body.appendChild(compassDiv);
 
             // Fonction pour afficher les logs
             function log(message) {
                 const logEntry = document.createElement('div');
                 logEntry.textContent = message;
                 logDiv.appendChild(logEntry);
+                
+                // Limiter le nombre d'entrées de log affichées
+                if (logDiv.children.length > 6) {
+                    logDiv.removeChild(logDiv.children[0]);
+                }
                 console.log(message);
             }
 
-            log("Application démarrée");
+            log("Application démarrée - Recherche de l'objet");
+
+            // Variables pour stocker l'orientation du dispositif
+            let deviceHeading = 0;
+
+            // Écouter les événements d'orientation du dispositif
+            window.addEventListener('deviceorientation', function(event) {
+                if (event.alpha !== null) {
+                    deviceHeading = 360 - event.alpha; // Convertir en azimut standard
+                }
+            });
 
             // Vérifier la position actuelle
             if (navigator.geolocation) {
@@ -57,13 +131,22 @@
                         const targetLng = 1.4797222;
                         
                         const distance = calculateDistance(currentLat, currentLng, targetLat, targetLng);
+                        const bearing = calculateBearing(currentLat, currentLng, targetLat, targetLng);
+                        const direction = getDirectionText(bearing, deviceHeading);
                         
-                        log(`Votre position: ${currentLat.toFixed(7)}, ${currentLng.toFixed(7)}`);
-                        log(`Précision: ±${accuracy.toFixed(1)} mètres`);
-                        log(`Distance avec l'objet: ${distance.toFixed(1)} mètres`);
+                        log(`Position: ${currentLat.toFixed(7)}, ${currentLng.toFixed(7)}`);
+                        log(`Distance: ${distance.toFixed(1)}m (précision ±${accuracy.toFixed(1)}m)`);
                         
-                        if (distance > 100) {
-                            log("ALERTE: L'objet est à plus de 100 mètres!");
+                        // Mettre à jour la boussole/direction
+                        compassDiv.textContent = `${direction} (${distance.toFixed(1)}m)`;
+                        
+                        if (distance < 1) {
+                            compassDiv.style.backgroundColor = 'rgba(0,255,0,0.8)';
+                            compassDiv.textContent = `VOUS Y ÊTES! (${distance.toFixed(1)}m)`;
+                        } else if (distance < 5) {
+                            compassDiv.style.backgroundColor = 'rgba(255,165,0,0.8)';
+                        } else {
+                            compassDiv.style.backgroundColor = 'rgba(255,0,0,0.8)';
                         }
                     },
                     (error) => {
@@ -89,14 +172,16 @@
                 logDiv.appendChild(logEntry);
 
                 this.el.addEventListener('gps-entity-place-loaded', function() {
+                    const logDiv = document.getElementById('debug-log');
                     const logEntry = document.createElement('div');
                     logEntry.textContent = "✅ Box GPS chargée correctement!";
                     logDiv.appendChild(logEntry);
                 });
 
                 this.el.addEventListener('gps-entity-place-update-position', function(evt) {
+                    const logDiv = document.getElementById('debug-log');
                     const logEntry = document.createElement('div');
-                    logEntry.textContent = `Box position mise à jour: ${evt.detail.distance.toFixed(2)}m`;
+                    logEntry.textContent = `Box mise à jour: ${evt.detail.distance.toFixed(2)}m`;
                     logDiv.appendChild(logEntry);
                 });
             }
@@ -113,8 +198,8 @@
             box-loaded
             gps-new-entity-place="latitude: 44.1127778; longitude: 1.4797222"
             material="color: red;"
-            scale="20 20 20"
-            position="0 0 0"
+            scale="50 50 50"
+            position="0 0 0" 
         ></a-box>
         <a-camera gps-new-camera rotation-reader></a-camera>
     </a-scene>
