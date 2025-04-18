@@ -1,11 +1,252 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AR.js avec guide directionnel</title>
+    <title>AR.js Debugger</title>
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
     <script>
-        // Fonction pour calculer la distance entre deux points GPS
+        // Rediriger toutes les erreurs vers notre affichage
+        window.onerror = function(message, source, lineno, colno, error) {
+            displayError("ERREUR JS: " + message);
+            return true;
+        };
+
+        function displayError(message) {
+            if (!window.errorDiv) {
+                window.errorDiv = document.createElement('div');
+                errorDiv.style.position = 'absolute';
+                errorDiv.style.top = '50%';
+                errorDiv.style.left = '10%';
+                errorDiv.style.width = '80%';
+                errorDiv.style.backgroundColor = 'rgba(255,0,0,0.9)';
+                errorDiv.style.color = 'white';
+                errorDiv.style.padding = '20px';
+                errorDiv.style.fontFamily = 'Arial, sans-serif';
+                errorDiv.style.fontSize = '18px';
+                errorDiv.style.zIndex = '10000';
+                errorDiv.style.borderRadius = '10px';
+                errorDiv.style.textAlign = 'center';
+                document.body.appendChild(errorDiv);
+            }
+            
+            errorDiv.innerHTML += "<p>" + message + "</p>";
+        }
+
+        function displayStatus(message, color) {
+            const statusDiv = document.getElementById('status-box');
+            if (statusDiv) {
+                statusDiv.textContent = message;
+                statusDiv.style.backgroundColor = color || 'rgba(0,0,255,0.8)';
+            }
+        }
+
+        window.onload = function() {
+            // Créer un div pour afficher les logs détaillés
+            const logDiv = document.createElement('div');
+            logDiv.id = 'debug-log';
+            logDiv.style.position = 'absolute';
+            logDiv.style.top = '10px';
+            logDiv.style.left = '10px';
+            logDiv.style.backgroundColor = 'rgba(0,0,0,0.7)';
+            logDiv.style.color = 'white';
+            logDiv.style.padding = '10px';
+            logDiv.style.fontFamily = 'monospace';
+            logDiv.style.zIndex = '9999';
+            logDiv.style.maxHeight = '30%';
+            logDiv.style.overflowY = 'auto';
+            logDiv.style.width = '80%';
+            document.body.appendChild(logDiv);
+
+            // Créer un élément pour afficher le statut
+            const statusDiv = document.createElement('div');
+            statusDiv.id = 'status-box';
+            statusDiv.style.position = 'absolute';
+            statusDiv.style.bottom = '20px';
+            statusDiv.style.left = '50%';
+            statusDiv.style.transform = 'translateX(-50%)';
+            statusDiv.style.backgroundColor = 'rgba(0,0,255,0.8)';
+            statusDiv.style.color = 'white';
+            statusDiv.style.padding = '15px';
+            statusDiv.style.borderRadius = '10px';
+            statusDiv.style.fontFamily = 'Arial, sans-serif';
+            statusDiv.style.fontSize = '20px';
+            statusDiv.style.fontWeight = 'bold';
+            statusDiv.style.zIndex = '9999';
+            statusDiv.style.textAlign = 'center';
+            statusDiv.style.width = '80%';
+            document.body.appendChild(statusDiv);
+
+            // Bouton pour forcer la création d'un nouvel objet
+            const newObjectBtn = document.createElement('button');
+            newObjectBtn.textContent = "Créer nouvel objet";
+            newObjectBtn.style.position = 'absolute';
+            newObjectBtn.style.top = '10px';
+            newObjectBtn.style.right = '10px';
+            newObjectBtn.style.padding = '10px';
+            newObjectBtn.style.zIndex = '10000';
+            newObjectBtn.style.backgroundColor = '#4CAF50';
+            newObjectBtn.style.color = 'white';
+            newObjectBtn.style.border = 'none';
+            newObjectBtn.style.borderRadius = '5px';
+            newObjectBtn.onclick = function() {
+                createNewObject();
+                log("Tentative de création d'un nouvel objet à votre position actuelle");
+            };
+            document.body.appendChild(newObjectBtn);
+
+            function log(message) {
+                const logEntry = document.createElement('div');
+                logEntry.textContent = message;
+                logDiv.appendChild(logEntry);
+                console.log(message);
+                
+                // Scroll to bottom
+                logDiv.scrollTop = logDiv.scrollHeight;
+            }
+
+            // Fonction pour créer un nouvel objet à la position actuelle
+            function createNewObject() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const currentLat = position.coords.latitude;
+                            const currentLng = position.coords.longitude;
+                            
+                            // Supprimer l'ancien box s'il existe
+                            const oldBox = document.querySelector('a-box');
+                            if (oldBox) {
+                                oldBox.parentNode.removeChild(oldBox);
+                            }
+                            
+                            // Créer un nouvel élément box
+                            const scene = document.querySelector('a-scene');
+                            const newBox = document.createElement('a-box');
+                            newBox.setAttribute('box-loaded', '');
+                            newBox.setAttribute('gps-new-entity-place', `latitude: ${currentLat}; longitude: ${currentLng}`);
+                            newBox.setAttribute('material', 'color: yellow');
+                            newBox.setAttribute('scale', '20 20 20');
+                            newBox.setAttribute('position', '0 2 0');
+                            scene.appendChild(newBox);
+                            
+                            log(`Nouvel objet créé à: ${currentLat}, ${currentLng}`);
+                            displayStatus("NOUVEL OBJET CRÉÉ À VOTRE POSITION", "rgba(255,215,0,0.8)");
+                        },
+                        (error) => {
+                            log(`Erreur GPS: ${error.message} (code ${error.code})`);
+                            displayError(`Impossible d'obtenir votre position: ${error.message}`);
+                        }
+                    );
+                }
+            }
+
+            // Vérifier la disponibilité de la caméra
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                    .then(function(stream) {
+                        log("✅ Caméra accessible");
+                        displayStatus("INITIALISATION AR...", "rgba(0,0,255,0.8)");
+                        stream.getTracks().forEach(track => track.stop()); // Arrêter le flux pour économiser les ressources
+                    })
+                    .catch(function(error) {
+                        log("❌ Erreur d'accès à la caméra: " + error.message);
+                        displayError("Erreur d'accès à la caméra: " + error.message);
+                    });
+            } else {
+                log("❌ getUserMedia non supporté");
+                displayError("Votre appareil ne supporte pas l'accès à la caméra");
+            }
+
+            // Vérifier si le GPS est disponible
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        log("✅ GPS accessible");
+                        log(`Position: ${position.coords.latitude}, ${position.coords.longitude}`);
+                        log(`Précision: ±${position.coords.accuracy} mètres`);
+                        
+                        const targetLat = 44.1127778;
+                        const targetLng = 1.4797222;
+                        
+                        // Calculer la distance avec l'objet cible
+                        const distance = calculateDistance(
+                            position.coords.latitude, 
+                            position.coords.longitude,
+                            targetLat,
+                            targetLng
+                        );
+                        
+                        log(`Distance avec l'objet cible: ${distance.toFixed(2)} mètres`);
+                        
+                        if (distance > 100) {
+                            log("⚠️ ATTENTION: L'objet est à plus de 100 mètres");
+                        }
+                        
+                        displayStatus("AR EN COURS D'INITIALISATION", "rgba(0,128,255,0.8)");
+                    },
+                    (error) => {
+                        log(`❌ Erreur GPS: ${error.message} (code ${error.code})`);
+                        displayError(`Problème d'accès au GPS: ${error.message}`);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    }
+                );
+            } else {
+                log("❌ Géolocalisation non supportée");
+                displayError("Votre appareil ne supporte pas la géolocalisation");
+            }
+
+            // Vérifier si la boussole est disponible
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener('deviceorientation', function(event) {
+                    if (event.alpha !== null) {
+                        log("✅ Boussole accessible");
+                        window.removeEventListener('deviceorientation', arguments.callee);
+                    }
+                }, { once: true });
+                
+                // Vérifie après 3 secondes si la boussole a été détectée
+                setTimeout(function() {
+                    if (!window.compassDetected) {
+                        log("⚠️ Boussole peut-être non accessible");
+                    }
+                }, 3000);
+            } else {
+                log("❌ Boussole non supportée");
+            }
+
+            // Vérifier la version d'AR.js
+            if (typeof AFRAME !== 'undefined' && AFRAME.version) {
+                log(`A-Frame version: ${AFRAME.version}`);
+            }
+            
+            if (typeof AR !== 'undefined' && AR.version) {
+                log(`AR.js version: ${AR.version}`);
+            } else {
+                log("⚠️ Version AR.js non détectée");
+            }
+
+            log("Démarrage de l'application AR");
+            displayStatus("CHARGEMENT...", "rgba(0,0,255,0.8)");
+            
+            // Vérification périodique de l'état de l'application
+            setTimeout(function checkARStatus() {
+                const boxElement = document.querySelector('a-box');
+                
+                if (boxElement && boxElement.components && 
+                    boxElement.components['gps-new-entity-place']) {
+                    log("✅ Composant GPS correctement initialisé");
+                    displayStatus("OBJET AR INITIALISÉ", "rgba(0,128,0,0.8)");
+                } else {
+                    log("⚠️ Le composant GPS n'est peut-être pas correctement initialisé");
+                    displayStatus("PROBLÈME D'INITIALISATION AR", "rgba(255,165,0,0.8)");
+                }
+            }, 5000);
+        };
+
+        // Calculer la distance entre deux points GPS
         function calculateDistance(lat1, lon1, lat2, lon2) {
             const R = 6371e3; // Rayon de la terre en mètres
             const φ1 = lat1 * Math.PI/180;
@@ -21,168 +262,79 @@
             return d; // distance en mètres
         }
 
-        // Fonction pour calculer le cap (bearing) entre deux points
-        function calculateBearing(lat1, lon1, lat2, lon2) {
-            const φ1 = lat1 * Math.PI/180;
-            const φ2 = lat2 * Math.PI/180;
-            const λ1 = lon1 * Math.PI/180;
-            const λ2 = lon2 * Math.PI/180;
-
-            const y = Math.sin(λ2-λ1) * Math.cos(φ2);
-            const x = Math.cos(φ1) * Math.sin(φ2) -
-                    Math.sin(φ1) * Math.cos(φ2) * Math.cos(λ2-λ1);
-            const θ = Math.atan2(y, x);
-            
-            return (θ*180/Math.PI + 360) % 360; // en degrés
-        }
-
-        // Fonction pour obtenir la direction en langage naturel
-        function getDirectionText(bearing, deviceHeading) {
-            // Calculer l'angle relatif entre la direction de l'objet et celle du téléphone
-            let relativeBearing = (bearing - deviceHeading + 360) % 360;
-            
-            // Convertir en direction
-            if (relativeBearing > 337.5 || relativeBearing <= 22.5) {
-                return "DROIT DEVANT";
-            } else if (relativeBearing > 22.5 && relativeBearing <= 67.5) {
-                return "AVANT-DROITE";
-            } else if (relativeBearing > 67.5 && relativeBearing <= 112.5) {
-                return "À DROITE";
-            } else if (relativeBearing > 112.5 && relativeBearing <= 157.5) {
-                return "ARRIÈRE-DROITE";
-            } else if (relativeBearing > 157.5 && relativeBearing <= 202.5) {
-                return "DERRIÈRE VOUS";
-            } else if (relativeBearing > 202.5 && relativeBearing <= 247.5) {
-                return "ARRIÈRE-GAUCHE";
-            } else if (relativeBearing > 247.5 && relativeBearing <= 292.5) {
-                return "À GAUCHE";
-            } else if (relativeBearing > 292.5 && relativeBearing <= 337.5) {
-                return "AVANT-GAUCHE";
-            }
-        }
-
-        window.onload = function() {
-            // Créer un div pour afficher les logs
-            const logDiv = document.createElement('div');
-            logDiv.id = 'debug-log';
-            logDiv.style.position = 'absolute';
-            logDiv.style.top = '10px';
-            logDiv.style.left = '10px';
-            logDiv.style.backgroundColor = 'rgba(0,0,0,0.7)';
-            logDiv.style.color = 'white';
-            logDiv.style.padding = '10px';
-            logDiv.style.fontFamily = 'monospace';
-            logDiv.style.zIndex = '9999';
-            logDiv.style.width = '80%';
-            document.body.appendChild(logDiv);
-
-            // Créer un élément pour la boussole/direction
-            const compassDiv = document.createElement('div');
-            compassDiv.id = 'compass';
-            compassDiv.style.position = 'absolute';
-            compassDiv.style.bottom = '20px';
-            compassDiv.style.left = '50%';
-            compassDiv.style.transform = 'translateX(-50%)';
-            compassDiv.style.backgroundColor = 'rgba(255,0,0,0.8)';
-            compassDiv.style.color = 'white';
-            compassDiv.style.padding = '15px';
-            compassDiv.style.borderRadius = '10px';
-            compassDiv.style.fontFamily = 'Arial, sans-serif';
-            compassDiv.style.fontSize = '24px';
-            compassDiv.style.fontWeight = 'bold';
-            compassDiv.style.zIndex = '9999';
-            compassDiv.style.textAlign = 'center';
-            document.body.appendChild(compassDiv);
-
-            // Fonction pour afficher les logs
-            function log(message) {
-                const logEntry = document.createElement('div');
-                logEntry.textContent = message;
-                logDiv.appendChild(logEntry);
-                
-                // Limiter le nombre d'entrées de log affichées
-                if (logDiv.children.length > 6) {
-                    logDiv.removeChild(logDiv.children[0]);
-                }
-                console.log(message);
-            }
-
-            log("Application démarrée - Recherche de l'objet");
-
-            // Variables pour stocker l'orientation du dispositif
-            let deviceHeading = 0;
-
-            // Écouter les événements d'orientation du dispositif
-            window.addEventListener('deviceorientation', function(event) {
-                if (event.alpha !== null) {
-                    deviceHeading = 360 - event.alpha; // Convertir en azimut standard
-                }
-            });
-
-            // Vérifier la position actuelle
-            if (navigator.geolocation) {
-                navigator.geolocation.watchPosition(
-                    (position) => {
-                        const currentLat = position.coords.latitude;
-                        const currentLng = position.coords.longitude;
-                        const accuracy = position.coords.accuracy;
-                        
-                        const targetLat = 44.1127778;
-                        const targetLng = 1.4797222;
-                        
-                        const distance = calculateDistance(currentLat, currentLng, targetLat, targetLng);
-                        const bearing = calculateBearing(currentLat, currentLng, targetLat, targetLng);
-                        const direction = getDirectionText(bearing, deviceHeading);
-                        
-                        log(`Position: ${currentLat.toFixed(7)}, ${currentLng.toFixed(7)}`);
-                        log(`Distance: ${distance.toFixed(1)}m (précision ±${accuracy.toFixed(1)}m)`);
-                        
-                        // Mettre à jour la boussole/direction
-                        compassDiv.textContent = `${direction} (${distance.toFixed(1)}m)`;
-                        
-                        if (distance < 1) {
-                            compassDiv.style.backgroundColor = 'rgba(0,255,0,0.8)';
-                            compassDiv.textContent = `VOUS Y ÊTES! (${distance.toFixed(1)}m)`;
-                        } else if (distance < 5) {
-                            compassDiv.style.backgroundColor = 'rgba(255,165,0,0.8)';
-                        } else {
-                            compassDiv.style.backgroundColor = 'rgba(255,0,0,0.8)';
-                        }
-                    },
-                    (error) => {
-                        log(`Erreur GPS: ${error.message} (code ${error.code})`);
-                    },
-                    {
-                        enableHighAccuracy: true,
-                        maximumAge: 0,
-                        timeout: 27000
-                    }
-                );
-            } else {
-                log("Géolocalisation non supportée par ce navigateur");
-            }
-        };
-
         // Écouter les événements de l'objet AR
         AFRAME.registerComponent('box-loaded', {
             init: function() {
-                const logDiv = document.getElementById('debug-log');
-                const logEntry = document.createElement('div');
-                logEntry.textContent = "Box initialisée";
-                logDiv.appendChild(logEntry);
-
-                this.el.addEventListener('gps-entity-place-loaded', function() {
+                const el = this.el;
+                const log = function(message) {
                     const logDiv = document.getElementById('debug-log');
-                    const logEntry = document.createElement('div');
-                    logEntry.textContent = "✅ Box GPS chargée correctement!";
-                    logDiv.appendChild(logEntry);
+                    if (logDiv) {
+                        const logEntry = document.createElement('div');
+                        logEntry.textContent = message;
+                        logDiv.appendChild(logEntry);
+                        // Scroll to bottom
+                        logDiv.scrollTop = logDiv.scrollHeight;
+                    }
+                    console.log(message);
+                };
+
+                log("Box initialisée");
+
+                // Délai pour vérifier si la box est visible
+                setTimeout(() => {
+                    if (el.object3D && !el.object3D.visible) {
+                        log("⚠️ L'objet est initialisé mais non visible");
+                        displayStatus("OBJET CHARGÉ MAIS NON VISIBLE", "rgba(255,165,0,0.8)");
+                    }
+                }, 3000);
+
+                el.addEventListener('gps-entity-place-loaded', function() {
+                    log("✅ Box GPS chargée correctement!");
+                    displayStatus("OBJET AR CHARGÉ", "rgba(0,128,0,0.8)");
                 });
 
-                this.el.addEventListener('gps-entity-place-update-position', function(evt) {
+                el.addEventListener('gps-entity-place-update-position', function(evt) {
+                    log(`Box mise à jour: ${evt.detail.distance.toFixed(2)}m`);
+                    
+                    if (evt.detail.distance < 10) {
+                        displayStatus(`OBJET À ${evt.detail.distance.toFixed(1)}m`, "rgba(0,128,0,0.8)");
+                    } else {
+                        displayStatus(`OBJET À ${evt.detail.distance.toFixed(1)}m`, "rgba(255,165,0,0.8)");
+                    }
+                });
+            }
+        });
+
+        // Vérifier l'état de la scène AR
+        AFRAME.registerComponent('scene-loaded', {
+            init: function() {
+                const log = function(message) {
                     const logDiv = document.getElementById('debug-log');
-                    const logEntry = document.createElement('div');
-                    logEntry.textContent = `Box mise à jour: ${evt.detail.distance.toFixed(2)}m`;
-                    logDiv.appendChild(logEntry);
+                    if (logDiv) {
+                        const logEntry = document.createElement('div');
+                        logEntry.textContent = message;
+                        logDiv.appendChild(logEntry);
+                    }
+                    console.log(message);
+                };
+
+                log("Scene A-Frame initialisée");
+                
+                this.el.addEventListener('loaded', function() {
+                    log("✅ Scene A-Frame chargée");
+                });
+                
+                this.el.addEventListener('arjs-video-loaded', function() {
+                    log("✅ Vidéo AR.js chargée");
+                });
+                
+                this.el.addEventListener('camera-init', function() {
+                    log("✅ Caméra AR initialisée");
+                });
+                
+                this.el.addEventListener('camera-error', function(error) {
+                    log("❌ Erreur de caméra AR: " + error);
+                    displayError("Erreur de caméra AR: " + error);
                 });
             }
         });
@@ -193,13 +345,14 @@
         embedded
         arjs="sourceType: webcam; debugUIEnabled: false;"
         vr-mode-ui="enabled: false"
+        scene-loaded
     >
         <a-box 
             box-loaded
             gps-new-entity-place="latitude: 44.1127778; longitude: 1.4797222"
             material="color: red;"
-            scale="50 50 50"
-            position="0 0 0" 
+            scale="80 80 80"
+            position="0 1.5 0"
         ></a-box>
         <a-camera gps-new-camera rotation-reader></a-camera>
     </a-scene>
