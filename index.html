@@ -15,7 +15,7 @@
     arjs="sourceType: webcam; debugUIEnabled: false;"
     >
       <!-- Caméra GPS -->
-      <a-camera gps-new-camera rotation-reader></a-camera>
+      <a-camera gps-new-camera='gpsMinDistance: 5'></a-camera>
 
       <!-- Boîte rouge positionnée aux coordonnées GPS spécifiées -->
       <a-box
