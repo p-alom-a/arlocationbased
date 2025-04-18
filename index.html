@@ -8,17 +8,19 @@
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/examples/gps/gps-location-component.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/examples/gps/gps-entity-place-component.js"></script>
+   
   </head>
   <body style="margin: 0; overflow: hidden;">
+   
     <a-scene vr-mode-ui="enabled: false" arjs="sourceType: webcam; debugUIEnabled: false;">
-      <!-- Ajoutez votre modèle 3D ici avec des coordonnées GPS -->
+
       <a-entity
-        gltf-model="keyboard.glb"
+        gltf-model="./src/keyboard.glb"
         scale="0.5 0.5 0.5"
         gps-entity-place="latitude: 44.11284337063347; longitude: 1.4798227332225686;"
       ></a-entity>
 
-      <!-- Caméra AR avec géolocalisation -->
+      
       <a-camera gps-camera rotation-reader></a-camera>
     </a-scene>
   </body>
