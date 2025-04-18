@@ -17,6 +17,9 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.0.17
         version: 4.1.4(vite@6.3.2(jiti@2.4.2)(lightningcss@1.29.2))
+      ar.js:
+        specifier: 2.0.8
+        version: 2.0.8
       lucide-react:
         specifier: ^0.484.0
         version: 0.484.0(react@19.1.0)
@@ -714,6 +717,9 @@ packages:
   ansi-styles@4.3.0:
     resolution: {integrity: sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg==}
     engines: {node: '>=8'}
+
+  ar.js@2.0.8:
+    resolution: {integrity: sha512-d1JBZbWaIj7W4Isrb3oo9+7PiZiR4/jUHlW3qG8v27gRolEEmeqFz44blHfKFs4I9oX+X+NWSKYHAJyO+Y203g==}
 
   argparse@2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
@@ -2173,6 +2179,8 @@ snapshots:
   ansi-styles@4.3.0:
     dependencies:
       color-convert: 2.0.1
+
+  ar.js@2.0.8: {}
 
   argparse@2.0.1: {}
 

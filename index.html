@@ -2,8 +2,14 @@
 <html>
 <head>
     <title>AR.js Debugger</title>
-    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+ <!-- A-Frame itself -->
+<script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+
+<!-- Pure three.js code that the A-Frame components use for location-based AR -->
+<script type='text/javascript' src='https://raw.githack.com/AR-js-org/AR.js/3.4.5/three.js/build/ar-threex-location-only.js'></script>
+
+<!-- AR.js A-Frame components -->
+<script type='text/javascript' src='https://raw.githack.com/AR-js-org/AR.js/3.4.5/aframe/build/aframe-ar.js'></script>
     <script>
         // Rediriger toutes les erreurs vers notre affichage
         window.onerror = function(message, source, lineno, colno, error) {
