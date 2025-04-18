@@ -4,26 +4,22 @@
     <title>AR.js A-Frame – Exemple GPS</title>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
   </head>
   <body style="margin: 0; overflow: hidden;">
     <a-scene
-    embedded
-    loading-screen="enabled: false;"
-    arjs="sourceType: webcam; debugUIEnabled: false;"
+      vr-mode-ui="enabled: false"
+      arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;"
     >
-      <!-- Caméra GPS -->
-      <a-camera gps-new-camera='gpsMinDistance: 5'></a-camera>
-
-      <!-- Boîte rouge positionnée aux coordonnées GPS spécifiées -->
-      <a-box
-        material="color: yellow" 
-        scale="150 150 150"
-        gps-new-entity-place="latitude: 44.1127778; longitude: 1.4797222"
+      <a-text
+        value="This content will always face you."
         look-at="[gps-camera]"
-      ></a-box>
+        scale="120 120 120"
+        gps-entity-place="latitude: 44.11284337063347; longitude: 1.4798227332225686;"
+      ></a-text>
+      <a-camera gps-camera rotation-reader> </a-camera>
     </a-scene>
   </body>
 </html>
