@@ -1,29 +1,40 @@
-
 <!DOCTYPE html>
 <html>
-<head>
-    <title>AR.js A-Frame - Modèle 3D avec Géolocalisation</title>
+  <head>
+    <title>AR.js A-Frame – Exemple Modèle 3D avec Géolocalisation</title>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
     <script type='text/javascript' src='https://raw.githack.com/AR-js-org/AR.js/3.4.5/three.js/build/ar-threex-location-only.js'></script>
     <script type='text/javascript' src='https://raw.githack.com/AR-js-org/AR.js/3.4.5/aframe/build/aframe-ar.js'></script>
-</head>
-<body style="margin: 0; overflow: hidden;">
-    <a-scene vr-mode-ui="enabled: false" arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: gps;">
-        <!-- Créer un marqueur de position GPS -->
-        <a-entity id="geo-marker" gps-entity-place="latitude: 44.11284337063347; longitude: 1.4798227332225686;">
-            <!-- Attacher le modèle comme enfant du marqueur GPS -->
-            <a-entity
-                gltf-model="/arlocationbased/assets/dog.glb"
-                scale="0.5 0.5 0.5"
-                position="0 0 0"
-                rotation="0 0 0">
-            </a-entity>
-        </a-entity>
+  </head>
+  <body style="margin: 0; overflow: hidden;">
+    <a-scene vr-mode-ui="enabled: false" arjs="sourceType: webcam; debugUIEnabled: false;">
+      
+      <!-- La caméra GPS -->
+      <a-camera gps-camera rotation-reader></a-camera>
 
-        <!-- Utiliser une caméra GPS avec rotation-reader -->
-        <a-camera gps-camera rotation-reader></a-camera>
-    </a-scene>
-</body>
+      <!-- Le modèle ne sera ajouté qu’après que le GPS soit prêt -->
+      <a-entity id="model-container"></a-entity>
+
+    </a-scene> 
+
+    <script>
+      window.onload = () => {
+        const camera = document.querySelector("[gps-camera]");
+        const modelContainer = document.getElementById("model-container");
+
+        camera.addEventListener("gps-camera-update-position", (e) => {
+          console.log("Position GPS acquise, ajout du modèle !");
+          const model = document.createElement("a-entity");
+
+          model.setAttribute("gltf-model", "/arlocationbased/assets/dog.glb");
+          model.setAttribute("scale", "0.5 0.5 0.5");
+          model.setAttribute("gps-entity-place", "latitude: 44.11284337063347; longitude: 1.4798227332225686;");
+          
+          modelContainer.appendChild(model);
+        }, { once: true }); // Une seule fois suffit
+      };
+    </script>
+  </body>
 </html>
