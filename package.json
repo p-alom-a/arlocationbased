@@ -16,14 +16,16 @@
     "@react-three/drei": "^10.0.5",
     "@react-three/fiber": "^9.1.0",
     "@tailwindcss/vite": "^4.0.17",
+    "aframe": "^1.7.1",
     "ar.js": "2.0.8",
+    "locar": "^0.0.11",
+    "locar-aframe": "^0.0.2",
     "lucide-react": "^0.484.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.4.0",
     "tailwindcss": "^4.0.17",
-   "locar" : "^0.0.11",
-   "three" : "^0.175.0"
+    "three": "^0.175.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
