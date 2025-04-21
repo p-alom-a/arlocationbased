@@ -27,7 +27,7 @@ const cam = new LocAR.Webcam({
 
 let firstLocation = true;
 
-const deviceOrientationControls = new LocAR.DeviceOrientationControls(camera);
+
 
 locar.on("gpsupdate", () => {
     if(firstLocation) {
@@ -54,6 +54,6 @@ locar.startGps();
 renderer.setAnimationLoop(animate);
 
 function animate() {
-    deviceOrientationControls.update();
+    
     renderer.render(scene, camera);
 }
