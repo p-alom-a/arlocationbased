@@ -24,8 +24,9 @@ const cam = new LocAR.Webcam({
     }
 });
 
-locar.fakeGps(-0.72, 51.05);
-locar.add(cube, -0.72, 51.0501);
+locar.startGps(function() {
+    locar.add(cube, 1.4795619094617978, 44.11273960461151);
+  });
 
 renderer.setAnimationLoop(animate);
 
