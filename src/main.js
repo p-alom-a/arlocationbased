@@ -27,10 +27,10 @@ const cam = new LocAR.Webcam({
 
 let firstLocation = true;
 
-locar.on("gpsupdate", (pos) => {
-    if (firstLocation) {
-        console.log("First GPS update received");
+const deviceOrientationControls = new LocAR.DeviceOrientationControls(camera);
 
+locar.on("gpsupdate", () => {
+    if(firstLocation) {
         // Coordonnées spécifiques pour le cube
         const targetLongitude = 1.4795619094617978;
         const targetLatitude = 44.11273960461151;
@@ -39,14 +39,11 @@ locar.on("gpsupdate", (pos) => {
         const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
         const mesh = new THREE.Mesh(geom, material);
 
-        // Ajouter le cube à la scène
         locar.add(
             mesh,
             targetLongitude,
             targetLatitude
         );
-
-        console.log("Cube added to the scene");
 
         firstLocation = false;
     }
@@ -57,5 +54,6 @@ locar.startGps();
 renderer.setAnimationLoop(animate);
 
 function animate() {
+    deviceOrientationControls.update();
     renderer.render(scene, camera);
 }
