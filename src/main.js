@@ -29,7 +29,7 @@ let firstLocation = true;
 
 const deviceOrientationControls = new LocAR.DeviceOrientationControls(camera);
 
-locar.on("gpsupdate", (pos, distMoved) => {
+locar.on("gpsupdate", () => {
     if(firstLocation) {
         // Coordonnées spécifiques pour le cube
         const targetLongitude = 1.4795619094617978;
