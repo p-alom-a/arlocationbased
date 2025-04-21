@@ -13,7 +13,6 @@ window.addEventListener("resize", e => {
     camera.updateProjectionMatrix();
 });
 const box = new THREE.BoxGeometry(2,2,2);
-
 const cube = new THREE.Mesh(box, new THREE.MeshBasicMaterial({ color: 0xff0000 }));
 
 const locar = new LocAR.LocationBased(scene, camera);
@@ -25,18 +24,12 @@ const cam = new LocAR.Webcam({
     }
 });
 
-// Create the device orientation tracker
-const deviceOrientationControls = new LocAR.DeviceOrientationControls(camera);
-
-locar.startGps();
+locar.fakeGps(-0.72, 51.05);
 locar.add(cube, -0.72, 51.0501);
 
 renderer.setAnimationLoop(animate);
 
 
 function animate() {
-    // Update the scene using the latest sensor readings
-    deviceOrientationControls.update();
-
     renderer.render(scene, camera);
 }
